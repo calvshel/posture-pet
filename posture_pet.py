@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import threading
 import time
+from argparse import ArgumentParser
+from pathlib import Path
 
 import pystray
 from PIL import Image, ImageDraw
@@ -31,11 +33,35 @@ def make_icon(happy: bool) -> Image.Image:
     return face
 
 
+def parse_args(argv: list[str] | None = None):
+    parser = ArgumentParser(description="Run a tray posture reminder with a pixel-art status icon.")
+    parser.add_argument("--minutes", type=float, default=45, help="stretch reminder interval in minutes (default: 45)")
+    parser.add_argument("--preview-icons", action="store_true", help="write a local posture_pet_preview.png and exit")
+    return parser.parse_args(argv)
+
+
+def interval_seconds(minutes: float) -> int:
+    seconds = int(round(minutes * 60))
+    if seconds <= 0:
+        raise ValueError("--minutes must be greater than 0")
+    return seconds
+
+
+def save_preview(path: str = "posture_pet_preview.png") -> Path:
+    canvas = Image.new("RGBA", (152, 80), (255, 255, 255, 0))
+    canvas.alpha_composite(make_icon(True), (8, 8))
+    canvas.alpha_composite(make_icon(False), (80, 8))
+    output = Path(path)
+    canvas.save(output)
+    return output
+
+
 class PosturePet:
-    def __init__(self) -> None:
+    def __init__(self, timer_seconds: int = TIMER_SECONDS) -> None:
         self._lock = threading.Lock()
         self._stop_event = threading.Event()
-        self._deadline = time.monotonic() + TIMER_SECONDS
+        self._timer_seconds = timer_seconds
+        self._deadline = time.monotonic() + self._timer_seconds
         self._alerted = False
         self.icon = pystray.Icon(
             "posture-pet",
@@ -68,7 +94,7 @@ class PosturePet:
 
     def reset_timer(self) -> None:
         with self._lock:
-            self._deadline = time.monotonic() + TIMER_SECONDS
+            self._deadline = time.monotonic() + self._timer_seconds
             self._alerted = False
             self.icon.icon = make_icon(True)
             self.icon.title = "Posture Pet"
@@ -81,8 +107,16 @@ class PosturePet:
         icon.stop()
 
 
-def main() -> None:
-    PosturePet().start()
+def main(argv: list[str] | None = None) -> None:
+    args = parse_args(argv)
+    if args.preview_icons:
+        save_preview()
+        return
+    try:
+        timer_seconds = interval_seconds(args.minutes)
+    except ValueError as error:
+        raise SystemExit(str(error)) from error
+    PosturePet(timer_seconds=timer_seconds).start()
 
 
 if __name__ == "__main__":
