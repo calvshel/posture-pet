@@ -13,6 +13,13 @@ Posture Pet lives in your system tray with a happy green pixel face. Every 45 mi
 - Tray menu action to reset the timer after stretching
 - Clean quit action from the tray menu
 - No bundled image files or external services
+- Configurable reminder interval with `--minutes`
+- Preview image generation with `--preview-icons`
+- Unit tests for icon generation and interval validation
+
+## Preview
+
+![Posture Pet generated tray states](posture_pet_preview.png)
 
 ## Setup
 
@@ -36,6 +43,18 @@ python posture_pet.py
 
 Once running, use the tray menu to reset the timer or quit the app.
 
+Use a shorter or longer reminder interval:
+
+```bash
+python posture_pet.py --minutes 30
+```
+
+Generate the preview image:
+
+```bash
+python posture_pet.py --preview-icons
+```
+
 ## Runtime Architecture
 
 Posture Pet keeps the application deliberately small:
@@ -58,13 +77,13 @@ Run a syntax check with:
 
 ```bash
 python3 -m py_compile posture_pet.py
+python3 -m unittest -v
 ```
 
 The app has no asset pipeline. Change the icon drawing in `make_icon()` and restart the app to test new states.
 
 ## Roadmap
 
-- Configurable reminder interval
 - Optional desktop notification when the timer expires
 - Pause mode for meetings or screen sharing
 - Lightweight session history
