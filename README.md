@@ -1,11 +1,31 @@
 # Posture Pet
 
-Posture Pet is a cross-platform Python system tray app that uses a friendly pixel-art face to keep your posture timer visible all day. It stays green and happy while you are on track, then turns red and slumped when forty-five minutes pass without a stretch break.
+A tiny cross-platform tray companion that turns sad when you have been sitting too long.
+
+Posture Pet lives in your system tray with a happy green pixel face. Every 45 minutes, it flips into a sad red slouch reminder until you choose `I Stretched!` from the tray menu. The icon is drawn entirely in Python, so the app ships without image assets.
+
+## Features
+
+- Cross-platform tray app powered by `pystray`
+- Programmatic pixel-style icons drawn with `Pillow`
+- Happy green default state and sad red reminder state
+- Background timer thread with a 45-minute stretch interval
+- Tray menu action to reset the timer after stretching
+- Clean quit action from the tray menu
+- No bundled image files or external services
 
 ## Setup
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
+```
+
+On Windows, activate the virtual environment with:
+
+```powershell
+.venv\Scripts\activate
 ```
 
 ## Run
@@ -14,21 +34,44 @@ pip install -r requirements.txt
 python posture_pet.py
 ```
 
+Once running, use the tray menu to reset the timer or quit the app.
+
 ## Runtime Architecture
 
-- `pystray` owns the system tray lifecycle and menu actions
-- `Pillow` draws the tray icon programmatically so no image assets are needed
-- A background daemon thread tracks a 45-minute countdown
-- When the timer expires, the tray icon redraws as a sad red face
-- Choosing `I Stretched!` resets the timer and restores the happy icon
+Posture Pet keeps the application deliberately small:
+
+- `pystray.Icon` owns the tray icon, title, and menu lifecycle
+- `PIL.ImageDraw` generates the happy and sad icons at runtime
+- A daemon thread checks the stretch deadline once per second
+- `threading.Lock` protects shared timer and alert state
+- `threading.Event` stops the timer loop cleanly when the app quits
 
 ## OS Requirements
 
-- macOS, Windows, or Linux with a desktop tray environment
 - Python 3.10 or newer recommended
-- A system tray implementation that supports icon updates from a running process
+- macOS, Windows, or Linux with a desktop tray environment
+- Linux users may need AppIndicator or a compatible system tray package installed by their desktop environment
 
-## MIT License
+## Development
+
+Run a syntax check with:
+
+```bash
+python3 -m py_compile posture_pet.py
+```
+
+The app has no asset pipeline. Change the icon drawing in `make_icon()` and restart the app to test new states.
+
+## Roadmap
+
+- Configurable reminder interval
+- Optional desktop notification when the timer expires
+- Pause mode for meetings or screen sharing
+- Lightweight session history
+
+## License
+
+MIT License
 
 Copyright (c) 2026 Calvin Shelwell
 
